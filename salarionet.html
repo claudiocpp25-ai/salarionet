@@ -1,0 +1,950 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SalárioNet — Gestão de Renda</title>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #080810;
+    --surface: #0f0f1a;
+    --surface2: #141422;
+    --border: #1c1c30;
+    --border2: #242438;
+    --text: #ddddf0;
+    --muted: #6060a0;
+    --muted2: #3a3a60;
+    --accent: #5b52f5;
+    --accent2: #9b6dff;
+    --green: #1dd17a;
+    --red: #f04f5a;
+    --orange: #f28c38;
+    --yellow: #e8c53a;
+    --pink: #c44ef5;
+    --mono: 'JetBrains Mono', monospace;
+    --sans: 'Sora', sans-serif;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    background: var(--bg);
+    font-family: var(--sans);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+  body::before {
+    content: '';
+    position: fixed;
+    top: -40%;
+    left: -20%;
+    width: 70vw;
+    height: 70vw;
+    background: radial-gradient(circle, rgba(91,82,245,0.06) 0%, transparent 70%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* HEADER */
+  .header {
+    position: sticky; top: 0; z-index: 100;
+    background: rgba(8,8,16,0.92);
+    backdrop-filter: blur(16px);
+    border-bottom: 1px solid var(--border);
+    padding: 0 32px;
+    display: flex; align-items: center; justify-content: space-between;
+    height: 64px;
+  }
+  .logo { display: flex; align-items: center; gap: 12px; }
+  .logo-icon {
+    width: 36px; height: 36px; border-radius: 10px;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px; box-shadow: 0 4px 20px rgba(91,82,245,0.4);
+  }
+  .logo-name { font-weight: 800; font-size: 15px; letter-spacing: -0.5px; }
+  .logo-sub { font-size: 9px; letter-spacing: 2.5px; color: var(--muted); text-transform: uppercase; margin-top: 1px; }
+  .nav { display: flex; gap: 4px; }
+  .nav-btn {
+    padding: 8px 18px; border-radius: 8px; font-size: 12px;
+    font-weight: 600; letter-spacing: 0.3px; border: none; cursor: pointer;
+    font-family: var(--sans); transition: all 0.2s; position: relative;
+  }
+  .nav-btn.active { background: var(--accent); color: #fff; box-shadow: 0 2px 14px rgba(91,82,245,0.4); }
+  .nav-btn:not(.active) { background: transparent; color: var(--muted); }
+  .nav-btn:not(.active):hover { color: var(--text); background: var(--surface); }
+
+  /* MAIN */
+  main { max-width: 1120px; margin: 0 auto; padding: 36px 24px; position: relative; z-index: 1; }
+
+  /* TABS */
+  .tab { display: none; animation: fadeIn 0.25s ease; }
+  .tab.active { display: block; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+  /* SECTION TITLE */
+  .section-title { font-size: 22px; font-weight: 800; letter-spacing: -0.5px; margin-bottom: 4px; }
+  .section-sub { font-size: 12px; color: var(--muted); letter-spacing: 0.3px; margin-bottom: 28px; }
+
+  /* CARD */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 24px;
+  }
+  .card-title {
+    font-size: 10px; font-weight: 700; letter-spacing: 2px;
+    text-transform: uppercase; margin-bottom: 20px;
+  }
+
+  /* GRID */
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+  .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
+  .col-span { grid-column: 1 / -1; }
+
+  /* FORM */
+  .field { margin-bottom: 14px; }
+  .field label { display: block; font-size: 10px; font-weight: 700; letter-spacing: 1.5px; color: var(--muted); text-transform: uppercase; margin-bottom: 7px; }
+  .field input, .field select, .field textarea {
+    width: 100%; background: var(--bg); border: 1px solid var(--border2);
+    border-radius: 10px; padding: 10px 14px; color: var(--text);
+    font-size: 13px; font-family: var(--mono); transition: all 0.2s;
+  }
+  .field input:focus, .field select:focus, .field textarea:focus {
+    outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(91,82,245,0.12);
+  }
+  .field input:disabled { opacity: 0.4; cursor: not-allowed; }
+  .field select option { background: #1a1a2a; }
+  .field textarea { resize: none; }
+  .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+  /* TOGGLE */
+  .toggle-wrap { display: flex; align-items: center; gap: 10px; cursor: pointer; user-select: none; }
+  .toggle-track {
+    width: 42px; height: 24px; border-radius: 99px; background: var(--border2);
+    position: relative; transition: background 0.2s; flex-shrink: 0;
+  }
+  .toggle-track.on { background: var(--accent); }
+  .toggle-thumb {
+    position: absolute; top: 4px; left: 4px; width: 16px; height: 16px;
+    border-radius: 50%; background: #fff; transition: left 0.2s;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.3);
+  }
+  .toggle-track.on .toggle-thumb { left: 22px; }
+  .toggle-label { font-size: 10px; font-weight: 700; letter-spacing: 1.5px; color: var(--muted); text-transform: uppercase; }
+
+  /* DIVIDER */
+  hr { border: none; border-top: 1px solid var(--border); margin: 18px 0; }
+
+  /* METRIC BOX */
+  .metric-box { background: var(--bg); border: 1px solid var(--border); border-radius: 12px; padding: 14px 16px; }
+  .metric-label { font-size: 10px; letter-spacing: 1.5px; color: var(--muted); text-transform: uppercase; margin-bottom: 8px; }
+  .metric-val { font-family: var(--mono); font-weight: 700; font-size: 16px; }
+
+  /* RESULT BAR */
+  .result-bar {
+    background: linear-gradient(135deg, rgba(91,82,245,0.08), rgba(155,109,255,0.06));
+    border: 1px solid rgba(91,82,245,0.18);
+    border-radius: 14px; padding: 20px 24px;
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .result-liq { font-family: var(--mono); font-weight: 700; font-size: 34px; color: var(--green); }
+  .result-info { font-size: 11px; color: var(--muted); margin-top: 4px; }
+
+  /* BUTTONS */
+  .btn-primary {
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    color: #fff; border: none; border-radius: 10px; padding: 12px 28px;
+    font-size: 13px; font-weight: 700; cursor: pointer; font-family: var(--sans);
+    letter-spacing: 0.3px; transition: all 0.2s; box-shadow: 0 4px 18px rgba(91,82,245,0.35);
+  }
+  .btn-primary:hover { opacity: 0.9; transform: translateY(-1px); box-shadow: 0 6px 24px rgba(91,82,245,0.45); }
+  .btn-primary:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+  .btn-ghost {
+    background: var(--surface2); color: var(--muted); border: 1px solid var(--border);
+    border-radius: 10px; padding: 12px 20px; font-size: 13px; font-weight: 600;
+    cursor: pointer; font-family: var(--sans); transition: all 0.2s;
+  }
+  .btn-ghost:hover { color: var(--text); border-color: var(--border2); }
+  .btn-row { display: flex; gap: 10px; justify-content: flex-end; margin-top: 16px; }
+  .btn-icon {
+    border: none; border-radius: 7px; padding: 6px 9px; cursor: pointer;
+    font-size: 12px; transition: all 0.15s; font-family: var(--sans);
+  }
+  .btn-edit { background: rgba(91,82,245,0.1); color: var(--accent2); }
+  .btn-edit:hover { background: rgba(91,82,245,0.2); }
+  .btn-del { background: rgba(240,79,90,0.1); color: var(--red); }
+  .btn-del:hover { background: rgba(240,79,90,0.2); }
+
+  /* TABLE */
+  .table-wrap { overflow-x: auto; border-radius: 14px; border: 1px solid var(--border); }
+  table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  thead tr { border-bottom: 1px solid var(--border); }
+  thead th {
+    padding: 11px 14px; text-align: right; font-size: 9px; font-weight: 700;
+    letter-spacing: 1.5px; color: var(--muted2); text-transform: uppercase;
+    background: var(--surface);
+  }
+  thead th:first-child { text-align: left; }
+  tbody tr { border-bottom: 1px solid rgba(28,28,48,0.6); transition: background 0.12s; }
+  tbody tr:hover td { background: rgba(91,82,245,0.04); }
+  tbody td { padding: 11px 14px; text-align: right; background: var(--surface); }
+  tbody td:first-child { text-align: left; }
+  tfoot tr { border-top: 2px solid var(--border2); }
+  tfoot td { padding: 11px 14px; text-align: right; background: var(--surface2); font-weight: 700; }
+  tfoot td:first-child { text-align: left; font-size: 10px; letter-spacing: 1.5px; color: var(--muted); text-transform: uppercase; }
+
+  /* PILLS */
+  .pill { border-radius: 99px; padding: 2px 8px; font-size: 10px; font-weight: 700; font-family: var(--mono); }
+  .pill-pos { background: rgba(29,209,122,0.12); color: var(--green); }
+  .pill-neg { background: rgba(240,79,90,0.12); color: var(--red); }
+  .pill-neu { color: var(--muted2); }
+
+  /* MONO */
+  .mono { font-family: var(--mono); }
+
+  /* YEAR LABEL */
+  .year-label {
+    font-size: 10px; font-weight: 700; letter-spacing: 3px;
+    color: var(--muted2); text-transform: uppercase; margin: 28px 0 10px;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .year-label::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+  /* IR CARD */
+  .ir-result {
+    border-radius: 14px; padding: 22px 24px;
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .ir-pos { background: rgba(29,209,122,0.07); border: 1px solid rgba(29,209,122,0.18); }
+  .ir-neg { background: rgba(240,79,90,0.07); border: 1px solid rgba(240,79,90,0.18); }
+  .ir-val { font-family: var(--mono); font-weight: 700; font-size: 30px; }
+  .ir-val-pos { color: var(--green); }
+  .ir-val-neg { color: var(--red); }
+
+  /* TOTAL CARD */
+  .total-mega {
+    border-radius: 16px; padding: 28px 24px; text-align: center;
+    border: 1px solid var(--border);
+  }
+  .total-mega .val { font-family: var(--mono); font-weight: 700; font-size: 28px; margin: 10px 0 5px; }
+
+  /* PROGRESS BAR */
+  .prog-track { height: 5px; background: var(--border2); border-radius: 99px; overflow: hidden; margin-top: 14px; }
+  .prog-fill { height: 100%; background: linear-gradient(90deg, var(--accent), var(--green)); border-radius: 99px; transition: width 0.5s ease; }
+
+  /* EMPTY STATE */
+  .empty { text-align: center; padding: 64px 24px; }
+  .empty-icon { font-size: 48px; margin-bottom: 16px; }
+  .empty-text { font-size: 13px; color: var(--muted); }
+  .empty-link { color: var(--accent2); cursor: pointer; text-decoration: underline; }
+
+  /* NOTIFICATION */
+  .toast {
+    position: fixed; bottom: 28px; right: 28px; z-index: 9999;
+    background: var(--surface2); border: 1px solid var(--border2);
+    border-radius: 12px; padding: 14px 20px;
+    font-size: 13px; font-weight: 500;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.5);
+    animation: slideUp 0.3s ease; display: none;
+  }
+  @keyframes slideUp { from { opacity:0; transform: translateY(12px); } to { opacity:1; transform: translateY(0); } }
+
+  /* MODAL */
+  .modal-overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 200;
+    display: none; align-items: center; justify-content: center; backdrop-filter: blur(4px);
+  }
+  .modal-overlay.open { display: flex; }
+  .modal { background: var(--surface); border: 1px solid var(--border); border-radius: 18px; padding: 28px; width: 380px; }
+  .modal-title { font-size: 16px; font-weight: 700; margin-bottom: 8px; }
+  .modal-sub { font-size: 12px; color: var(--muted); margin-bottom: 24px; }
+  .modal-btns { display: flex; gap: 10px; justify-content: flex-end; }
+
+  /* ALIQOTA TABLE */
+  .aliq-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  .aliq-table th { padding: 9px 12px; font-size: 9px; letter-spacing: 1.5px; color: var(--muted2); font-weight: 700; text-transform: uppercase; border-bottom: 1px solid var(--border); text-align: left; }
+  .aliq-table td { padding: 9px 12px; border-bottom: 1px solid rgba(28,28,48,0.5); }
+  .aliq-table tr:last-child td { border-bottom: none; }
+
+  @media (max-width: 760px) {
+    .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; }
+    .nav-btn { padding: 7px 12px; font-size: 11px; }
+    .header { padding: 0 16px; height: 60px; }
+    .nav { flex-wrap: wrap; gap: 2px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header class="header">
+  <div class="logo">
+    <div class="logo-icon">💰</div>
+    <div>
+      <div class="logo-name">SalárioNet</div>
+      <div class="logo-sub">Gestão de Renda Pessoal</div>
+    </div>
+  </div>
+  <nav class="nav">
+    <button class="nav-btn active" onclick="showTab('entrada')">✏️ Lançar</button>
+    <button class="nav-btn" onclick="showTab('historico')">📊 Histórico</button>
+    <button class="nav-btn" onclick="showTab('previsao')">🧾 IR Anual</button>
+    <button class="nav-btn" onclick="showTab('totais')">📈 Totais</button>
+  </nav>
+</header>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<!-- DELETE MODAL -->
+<div class="modal-overlay" id="deleteModal">
+  <div class="modal">
+    <div class="modal-title">Excluir registro?</div>
+    <div class="modal-sub">Esta ação não pode ser desfeita. O registro será removido permanentemente.</div>
+    <div class="modal-btns">
+      <button class="btn-ghost" onclick="closeDeleteModal()">Cancelar</button>
+      <button class="btn-primary" style="background:linear-gradient(135deg,#f04f5a,#c0392b); box-shadow:0 4px 18px rgba(240,79,90,0.35);" onclick="confirmDelete()">Excluir</button>
+    </div>
+  </div>
+</div>
+
+<main>
+
+  <!-- ══ TAB ENTRADA ══ -->
+  <div class="tab active" id="tab-entrada">
+    <div class="section-title" id="form-title">Novo Lançamento</div>
+    <div class="section-sub" id="form-sub">Preencha os dados do mês para calcular sua renda líquida</div>
+
+    <div class="grid-2">
+      <!-- GANHOS -->
+      <div class="card">
+        <div class="card-title" style="color:var(--accent2)">📅 Período &amp; Ganhos</div>
+
+        <div class="field-row">
+          <div class="field">
+            <label>Mês</label>
+            <select id="f-month">
+              <option value="">Selecione</option>
+              <option>Jan</option><option>Fev</option><option>Mar</option>
+              <option>Abr</option><option>Mai</option><option>Jun</option>
+              <option>Jul</option><option>Ago</option><option>Set</option>
+              <option>Out</option><option>Nov</option><option>Dez</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Ano</label>
+            <input type="number" id="f-year" value="2025">
+          </div>
+        </div>
+
+        <div class="field">
+          <label>💼 Salário Bruto</label>
+          <input type="number" id="f-salario" placeholder="0,00" oninput="recalc()">
+        </div>
+        <div class="field">
+          <label>🎯 Comissões</label>
+          <input type="number" id="f-comissao" placeholder="0,00" oninput="recalc()">
+        </div>
+        <div class="field">
+          <label>➕ Outros Ganhos</label>
+          <input type="number" id="f-outros-ganhos" placeholder="0,00" oninput="recalc()">
+        </div>
+
+        <hr>
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <span style="font-size:11px;color:var(--muted)">Renda Bruta Total</span>
+          <span class="mono" style="font-weight:700;font-size:18px;color:var(--pink)" id="display-bruto">R$ 0,00</span>
+        </div>
+      </div>
+
+      <!-- DESCONTOS -->
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+          <div class="card-title" style="color:var(--red);margin-bottom:0">📉 Descontos</div>
+          <div class="toggle-wrap" onclick="toggleAuto()">
+            <div class="toggle-track on" id="toggle-track"><div class="toggle-thumb"></div></div>
+            <span class="toggle-label">Auto Cálculo</span>
+          </div>
+        </div>
+
+        <div class="field">
+          <label>👤 Dependentes (IR)</label>
+          <input type="number" id="f-dependentes" value="0" min="0" oninput="recalc()">
+        </div>
+
+        <div class="field">
+          <label>INSS <span id="inss-hint" style="color:var(--accent2);font-size:9px;letter-spacing:0"></span></label>
+          <input type="number" id="f-inss" placeholder="0,00" oninput="recalc()">
+        </div>
+
+        <div class="field">
+          <label>IRRF <span id="irrf-hint" style="color:var(--accent2);font-size:9px;letter-spacing:0"></span></label>
+          <input type="number" id="f-irrf" placeholder="0,00" oninput="recalc()">
+        </div>
+
+        <div class="field">
+          <label>🔻 Outros Descontos</label>
+          <input type="number" id="f-outros-desc" placeholder="0,00" oninput="recalc()">
+        </div>
+
+        <div class="field">
+          <label>📝 Observação</label>
+          <textarea id="f-obs" rows="2" placeholder="Opcional..."></textarea>
+        </div>
+      </div>
+    </div>
+
+    <!-- RESULTADO -->
+    <div class="card" style="margin-top:20px">
+      <div class="grid-4" style="margin-bottom:18px">
+        <div class="metric-box">
+          <div class="metric-label">Renda Bruta</div>
+          <div class="metric-val" style="color:var(--pink)" id="res-bruto">R$ 0,00</div>
+        </div>
+        <div class="metric-box">
+          <div class="metric-label">Total Descontos</div>
+          <div class="metric-val" style="color:var(--red)" id="res-descontos">R$ 0,00</div>
+        </div>
+        <div class="metric-box">
+          <div class="metric-label">INSS</div>
+          <div class="metric-val" style="color:var(--orange)" id="res-inss">R$ 0,00</div>
+        </div>
+        <div class="metric-box">
+          <div class="metric-label">IRRF</div>
+          <div class="metric-val" style="color:var(--yellow)" id="res-irrf">R$ 0,00</div>
+        </div>
+      </div>
+
+      <div class="result-bar">
+        <div>
+          <div style="font-size:10px;letter-spacing:2.5px;color:var(--accent);font-weight:700;margin-bottom:5px">RENDA LÍQUIDA</div>
+          <div class="result-info" id="res-info">Alíquota IRRF: 0% · Desconto total: 0%</div>
+        </div>
+        <div class="result-liq" id="res-liquido">R$ 0,00</div>
+      </div>
+
+      <div class="btn-row" id="btn-row">
+        <button class="btn-primary" id="btn-submit" onclick="submitForm()">Registrar Mês</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ TAB HISTÓRICO ══ -->
+  <div class="tab" id="tab-historico">
+    <div class="section-title">Histórico de Renda</div>
+    <div class="section-sub" id="hist-sub">Nenhum registro ainda</div>
+    <div id="hist-body"></div>
+  </div>
+
+  <!-- ══ TAB PREVISÃO IR ══ -->
+  <div class="tab" id="tab-previsao">
+    <div class="section-title">Previsão de Restituição IR</div>
+    <div class="section-sub" id="ir-sub">Baseado nos meses lançados no ano atual</div>
+    <div id="ir-body"></div>
+  </div>
+
+  <!-- ══ TAB TOTAIS ══ -->
+  <div class="tab" id="tab-totais">
+    <div class="section-title">Totais &amp; Visão Geral</div>
+    <div class="section-sub">Consolidado de todos os períodos lançados</div>
+    <div id="totais-body"></div>
+  </div>
+
+</main>
+
+<script>
+// ─── CONSTANTS ───
+const STORAGE_KEY = 'salarionet_v2';
+const MONTHS = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+
+const INSS_FAIXAS = [
+  { max: 1518.00,  rate: 0.075 },
+  { max: 2793.88,  rate: 0.09  },
+  { max: 4190.83,  rate: 0.12  },
+  { max: 8157.41,  rate: 0.14  },
+];
+
+const IRRF_FAIXAS = [
+  { max: 2259.20,  rate: 0,     ded: 0       },
+  { max: 2826.65,  rate: 0.075, ded: 169.44  },
+  { max: 3751.05,  rate: 0.15,  ded: 381.44  },
+  { max: 4664.68,  rate: 0.225, ded: 662.77  },
+  { max: Infinity, rate: 0.275, ded: 896.00  },
+];
+
+const IRRF_ANUAL = [
+  { max: 27110.40,  rate: 0,     ded: 0        },
+  { max: 33919.80,  rate: 0.075, ded: 2033.28  },
+  { max: 45012.60,  rate: 0.15,  ded: 4572.08  },
+  { max: 55976.16,  rate: 0.225, ded: 7953.16  },
+  { max: Infinity,  rate: 0.275, ded: 10752.00 },
+];
+
+const DED_DEP = 189.59;
+
+// ─── STATE ───
+let records = [];
+let editId = null;
+let autoCalc = true;
+let deleteTargetId = null;
+
+// ─── STORAGE ───
+function loadData() {
+  try { const s = localStorage.getItem(STORAGE_KEY); if (s) records = JSON.parse(s); } catch {}
+}
+function saveData() {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(records)); } catch {}
+}
+
+// ─── FORMATTERS ───
+function fmt(v) {
+  return Number(v || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+}
+function num(id) { return parseFloat(document.getElementById(id)?.value || 0) || 0; }
+function val(id) { return document.getElementById(id)?.value || ''; }
+
+// ─── CALC ───
+function calcINSS(gross) {
+  let inss = 0, prev = 0;
+  for (const f of INSS_FAIXAS) {
+    if (gross <= prev) break;
+    inss += (Math.min(gross, f.max) - prev) * f.rate;
+    prev = f.max;
+    if (gross <= f.max) break;
+  }
+  return inss;
+}
+
+function calcIRRF(gross, inss, deps) {
+  const base = gross - inss - deps * DED_DEP;
+  if (base <= 0) return 0;
+  for (const f of IRRF_FAIXAS) {
+    if (base <= f.max) return Math.max(0, base * f.rate - f.ded);
+  }
+  return 0;
+}
+
+function calcIRAnual(base) {
+  if (base <= 0) return 0;
+  for (const f of IRRF_ANUAL) {
+    if (base <= f.max) return Math.max(0, base * f.rate - f.ded);
+  }
+  return 0;
+}
+
+// ─── TOGGLE ───
+function toggleAuto() {
+  autoCalc = !autoCalc;
+  const track = document.getElementById('toggle-track');
+  track.classList.toggle('on', autoCalc);
+  document.getElementById('f-inss').disabled = autoCalc;
+  document.getElementById('f-irrf').disabled = autoCalc;
+  recalc();
+}
+
+// ─── RECALC ───
+function recalc() {
+  const gross = num('f-salario') + num('f-comissao') + num('f-outros-ganhos');
+  const deps  = parseInt(num('f-dependentes')) || 0;
+  const inssA = calcINSS(gross);
+  const irrfA = calcIRRF(gross, inssA, deps);
+
+  if (autoCalc) {
+    document.getElementById('f-inss').value = inssA.toFixed(2);
+    document.getElementById('f-irrf').value = irrfA.toFixed(2);
+    document.getElementById('inss-hint').textContent = '(auto: ' + fmt(inssA) + ')';
+    document.getElementById('irrf-hint').textContent = '(auto: ' + fmt(irrfA) + ')';
+  } else {
+    document.getElementById('inss-hint').textContent = '';
+    document.getElementById('irrf-hint').textContent = '';
+  }
+
+  const inss  = num('f-inss');
+  const irrf  = num('f-irrf');
+  const outros = num('f-outros-desc');
+  const total = inss + irrf + outros;
+  const liq   = gross - total;
+
+  document.getElementById('display-bruto').textContent = fmt(gross);
+  document.getElementById('res-bruto').textContent     = fmt(gross);
+  document.getElementById('res-descontos').textContent = fmt(total);
+  document.getElementById('res-inss').textContent      = fmt(inss);
+  document.getElementById('res-irrf').textContent      = fmt(irrf);
+  document.getElementById('res-liquido').textContent   = fmt(liq);
+  document.getElementById('res-info').textContent =
+    'Alíquota IRRF: ' + (gross > 0 ? ((irrf/gross)*100).toFixed(1) : 0) + '% · Desconto total: ' + (gross > 0 ? ((total/gross)*100).toFixed(1) : 0) + '%';
+}
+
+// ─── SUBMIT ───
+function submitForm() {
+  const month = val('f-month');
+  const year  = parseInt(val('f-year')) || 0;
+  const sal   = num('f-salario');
+  if (!month || !year || !sal) { toast('⚠️ Preencha mês, ano e salário bruto.'); return; }
+
+  const gross  = sal + num('f-comissao') + num('f-outros-ganhos');
+  const inss   = num('f-inss');
+  const irrf   = num('f-irrf');
+  const outros = num('f-outros-desc');
+  const total  = inss + irrf + outros;
+  const liq    = gross - total;
+
+  const rec = {
+    id: editId || Date.now(),
+    month, year,
+    salario: sal,
+    comissao: num('f-comissao'),
+    outrosGanhos: num('f-outros-ganhos'),
+    inss, irrf,
+    outrosDesc: outros,
+    dependentes: parseInt(num('f-dependentes')) || 0,
+    obs: val('f-obs'),
+    gross, total, liq,
+  };
+
+  if (editId) {
+    records = records.map(r => r.id === editId ? rec : r);
+    toast('✅ Registro atualizado!');
+    editId = null;
+  } else {
+    records.push(rec);
+    toast('✅ Mês registrado com sucesso!');
+  }
+
+  records.sort((a,b) => a.year !== b.year ? a.year - b.year : MONTHS.indexOf(a.month) - MONTHS.indexOf(b.month));
+  saveData();
+  resetForm();
+  showTab('historico');
+}
+
+// ─── EDIT ───
+function editRecord(id) {
+  const r = records.find(x => x.id === id);
+  if (!r) return;
+  editId = id;
+
+  document.getElementById('f-month').value        = r.month;
+  document.getElementById('f-year').value         = r.year;
+  document.getElementById('f-salario').value      = r.salario;
+  document.getElementById('f-comissao').value     = r.comissao;
+  document.getElementById('f-outros-ganhos').value = r.outrosGanhos;
+  document.getElementById('f-inss').value         = r.inss;
+  document.getElementById('f-irrf').value         = r.irrf;
+  document.getElementById('f-outros-desc').value  = r.outrosDesc;
+  document.getElementById('f-dependentes').value  = r.dependentes;
+  document.getElementById('f-obs').value          = r.obs || '';
+
+  autoCalc = false;
+  document.getElementById('toggle-track').classList.remove('on');
+  document.getElementById('f-inss').disabled = false;
+  document.getElementById('f-irrf').disabled = false;
+
+  document.getElementById('form-title').textContent = '✏️ Editar Registro';
+  document.getElementById('form-sub').textContent   = r.month + '/' + r.year + ' — modificando dados';
+  document.getElementById('btn-row').innerHTML = `
+    <button class="btn-ghost" onclick="cancelEdit()">Cancelar</button>
+    <button class="btn-primary" onclick="submitForm()">Salvar Alterações</button>
+  `;
+
+  recalc();
+  showTab('entrada');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function cancelEdit() {
+  editId = null;
+  resetForm();
+}
+
+// ─── DELETE ───
+function deleteRecord(id) {
+  deleteTargetId = id;
+  document.getElementById('deleteModal').classList.add('open');
+}
+function closeDeleteModal() {
+  document.getElementById('deleteModal').classList.remove('open');
+  deleteTargetId = null;
+}
+function confirmDelete() {
+  records = records.filter(r => r.id !== deleteTargetId);
+  saveData();
+  closeDeleteModal();
+  toast('🗑️ Registro removido.');
+  renderAll();
+}
+
+// ─── RESET FORM ───
+function resetForm() {
+  ['f-month','f-salario','f-comissao','f-outros-ganhos','f-inss','f-irrf','f-outros-desc','f-obs'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+  document.getElementById('f-year').value = new Date().getFullYear();
+  document.getElementById('f-dependentes').value = '0';
+  autoCalc = true;
+  document.getElementById('toggle-track').classList.add('on');
+  document.getElementById('f-inss').disabled = true;
+  document.getElementById('f-irrf').disabled = true;
+  document.getElementById('form-title').textContent = 'Novo Lançamento';
+  document.getElementById('form-sub').textContent   = 'Preencha os dados do mês para calcular sua renda líquida';
+  document.getElementById('btn-row').innerHTML = `<button class="btn-primary" onclick="submitForm()">Registrar Mês</button>`;
+  recalc();
+}
+
+// ─── TABS ───
+function showTab(name) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+  const btns = document.querySelectorAll('.nav-btn');
+  const map = { entrada: 0, historico: 1, previsao: 2, totais: 3 };
+  btns[map[name]]?.classList.add('active');
+  renderAll();
+}
+
+// ─── RENDER HISTÓRICO ───
+function renderHistorico() {
+  const body = document.getElementById('hist-body');
+  const sub  = document.getElementById('hist-sub');
+  sub.textContent = records.length + ' registro(s) · variação mês a mês';
+
+  if (!records.length) {
+    body.innerHTML = `<div class="card empty"><div class="empty-icon">📭</div><div class="empty-text">Nenhum registro. <span class="empty-link" onclick="showTab('entrada')">Lance o primeiro mês!</span></div></div>`;
+    return;
+  }
+
+  const years = [...new Set(records.map(r => r.year))].sort((a,b) => b-a);
+  let html = '';
+
+  for (const year of years) {
+    const yr = records.filter(r => r.year === year);
+    const tBruto = yr.reduce((s,r)=>s+r.gross,0);
+    const tInss  = yr.reduce((s,r)=>s+r.inss,0);
+    const tIrrf  = yr.reduce((s,r)=>s+r.irrf,0);
+    const tOutros= yr.reduce((s,r)=>s+r.outrosDesc,0);
+    const tTotal = yr.reduce((s,r)=>s+r.total,0);
+    const tLiq   = yr.reduce((s,r)=>s+r.liq,0);
+
+    let rows = '';
+    yr.forEach((rec, i) => {
+      const prev  = yr[i - 1];
+      const dB = prev ? pct(rec.gross, prev.gross) : null;
+      const dL = prev ? pct(rec.liq,   prev.liq)   : null;
+      rows += `<tr>
+        <td><span style="color:var(--text);font-weight:600">${rec.month}/${rec.year}</span>${rec.obs ? '<br><span style="font-size:9px;color:var(--muted2)">'+rec.obs+'</span>' : ''}</td>
+        <td><span class="mono" style="color:var(--pink)">${fmt(rec.gross)}</span></td>
+        <td><span class="mono" style="color:var(--orange)">${fmt(rec.inss)}</span></td>
+        <td><span class="mono" style="color:var(--yellow)">${fmt(rec.irrf)}</span></td>
+        <td><span class="mono" style="color:var(--muted)">${fmt(rec.outrosDesc)}</span></td>
+        <td><span class="mono" style="color:var(--red)">${fmt(rec.total)}</span></td>
+        <td><span class="mono" style="font-weight:700;color:var(--green)">${fmt(rec.liq)}</span></td>
+        <td>${pillPct(dB)}</td>
+        <td>${pillPct(dL)}</td>
+        <td><div style="display:flex;gap:4px;justify-content:center">
+          <button class="btn-icon btn-edit" onclick="editRecord(${rec.id})">✏️</button>
+          <button class="btn-icon btn-del"  onclick="deleteRecord(${rec.id})">🗑️</button>
+        </div></td>
+      </tr>`;
+    });
+
+    html += `
+      <div class="year-label">— ${year} —</div>
+      <div class="table-wrap" style="margin-bottom:8px">
+        <table>
+          <thead><tr>
+            <th style="text-align:left">Mês</th>
+            <th>Bruto</th><th>INSS</th><th>IRRF</th><th>Outros</th>
+            <th>Descontos</th><th>Líquido</th>
+            <th>Δ Bruto</th><th>Δ Líquido</th><th></th>
+          </tr></thead>
+          <tbody>${rows}</tbody>
+          <tfoot><tr>
+            <td>TOTAL ${year}</td>
+            <td><span class="mono" style="color:var(--pink)">${fmt(tBruto)}</span></td>
+            <td><span class="mono" style="color:var(--orange)">${fmt(tInss)}</span></td>
+            <td><span class="mono" style="color:var(--yellow)">${fmt(tIrrf)}</span></td>
+            <td><span class="mono" style="color:var(--muted)">${fmt(tOutros)}</span></td>
+            <td><span class="mono" style="color:var(--red)">${fmt(tTotal)}</span></td>
+            <td><span class="mono" style="color:var(--green)">${fmt(tLiq)}</span></td>
+            <td colspan="3"></td>
+          </tr></tfoot>
+        </table>
+      </div>`;
+  }
+
+  body.innerHTML = html;
+}
+
+function pillPct(d) {
+  if (d === null) return '<span class="pill-neu">—</span>';
+  const cls = d >= 0 ? 'pill-pos' : 'pill-neg';
+  return `<span class="pill ${cls}">${d >= 0 ? '+' : ''}${d.toFixed(1)}%</span>`;
+}
+
+function pct(a, b) { return b ? ((a - b) / b) * 100 : null; }
+
+// ─── RENDER IR ───
+function renderPrevisao() {
+  const year = new Date().getFullYear();
+  const yr   = records.filter(r => r.year === year);
+  const body = document.getElementById('ir-body');
+  document.getElementById('ir-sub').textContent = 'Baseado nos ' + yr.length + ' meses lançados em ' + year;
+
+  if (!yr.length) {
+    body.innerHTML = `<div class="card empty"><div class="empty-icon">📊</div><div class="empty-text">Nenhum registro em ${year}.</div></div>`;
+    return;
+  }
+
+  const tBruto = yr.reduce((s,r)=>s+r.gross,0);
+  const tINSS  = yr.reduce((s,r)=>s+r.inss,0);
+  const tIRRF  = yr.reduce((s,r)=>s+r.irrf,0);
+  const deps   = yr[0]?.dependentes || 0;
+  const base   = Math.max(0, tBruto - tINSS - deps * DED_DEP * yr.length);
+  const irDev  = calcIRAnual(base);
+  const restit = tIRRF - irDev;
+
+  const irClass = restit >= 0 ? 'ir-pos' : 'ir-neg';
+  const irColor = restit >= 0 ? 'var(--green)' : 'var(--red)';
+  const irLabel = restit >= 0 ? '✅ PREVISÃO DE RESTITUIÇÃO' : '⚠️ IMPOSTO A PAGAR';
+  const projAviso = yr.length < 12
+    ? `<div style="margin-top:12px;padding:12px;background:rgba(91,82,245,0.06);border-radius:8px;font-size:11px;color:var(--muted)">
+        ⚡ Projeção com ${yr.length}/12 meses · Média mensal: ${fmt(tBruto / yr.length)} · Projeção anual: ${fmt(tBruto / yr.length * 12)}
+       </div>` : '';
+
+  body.innerHTML = `
+    <div class="grid-2" style="margin-bottom:20px">
+      <div class="card">
+        <div class="card-title" style="color:var(--accent2)">📊 Base de Cálculo Anual</div>
+        ${row('Renda Bruta Anual', fmt(tBruto), 'var(--pink)')}
+        ${row('(-) INSS Acumulado', fmt(tINSS), 'var(--orange)')}
+        ${row('(-) Dedução Dependentes', fmt(deps * DED_DEP * yr.length), 'var(--muted)')}
+        <hr>
+        ${row('= Base de Cálculo IR', fmt(base), 'var(--text)')}
+      </div>
+      <div class="card">
+        <div class="card-title" style="color:var(--green)">🧾 Apuração IR</div>
+        ${row('IR Retido na Fonte (IRRF)', fmt(tIRRF), 'var(--yellow)')}
+        ${row('IR Devido (tabela anual)', fmt(irDev), 'var(--red)')}
+        <div class="ir-result ${irClass}" style="margin-top:18px">
+          <div>
+            <div style="font-size:9px;letter-spacing:2px;font-weight:700;color:${irColor};margin-bottom:6px">${irLabel}</div>
+            <div style="font-size:11px;color:var(--muted)">${yr.length < 12 ? yr.length + '/12 meses lançados' : 'Todos os meses lançados'}</div>
+          </div>
+          <div class="ir-val" style="color:${irColor}">${fmt(Math.abs(restit))}</div>
+        </div>
+        ${projAviso}
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title" style="color:var(--accent2)">📋 Tabela Progressiva Anual 2024/2025</div>
+      <table class="aliq-table">
+        <thead><tr><th>Faixa (Base Anual)</th><th>Alíquota</th><th>Dedução</th></tr></thead>
+        <tbody>
+          <tr><td class="mono" style="color:var(--muted)">Até R$ 27.110,40</td><td style="color:var(--green);font-weight:700">Isento</td><td>—</td></tr>
+          <tr><td class="mono" style="color:var(--muted)">R$ 27.110,41 – R$ 33.919,80</td><td style="color:var(--yellow);font-weight:700">7,5%</td><td class="mono">R$ 2.033,28</td></tr>
+          <tr><td class="mono" style="color:var(--muted)">R$ 33.919,81 – R$ 45.012,60</td><td style="color:var(--yellow);font-weight:700">15%</td><td class="mono">R$ 4.572,08</td></tr>
+          <tr><td class="mono" style="color:var(--muted)">R$ 45.012,61 – R$ 55.976,16</td><td style="color:var(--orange);font-weight:700">22,5%</td><td class="mono">R$ 7.953,16</td></tr>
+          <tr><td class="mono" style="color:var(--muted)">Acima de R$ 55.976,16</td><td style="color:var(--red);font-weight:700">27,5%</td><td class="mono">R$ 10.752,00</td></tr>
+        </tbody>
+      </table>
+    </div>`;
+}
+
+function row(label, val, color) {
+  return `<div style="display:flex;justify-content:space-between;align-items:center;padding:11px 0;border-bottom:1px solid rgba(28,28,48,0.6)">
+    <span style="font-size:12px;color:var(--muted)">${label}</span>
+    <span class="mono" style="font-weight:600;color:${color}">${val}</span>
+  </div>`;
+}
+
+// ─── RENDER TOTAIS ───
+function renderTotais() {
+  const body = document.getElementById('totais-body');
+
+  if (!records.length) {
+    body.innerHTML = `<div class="card empty"><div class="empty-icon">📈</div><div class="empty-text">Lance seus meses para ver os totais aqui.</div></div>`;
+    return;
+  }
+
+  const gBruto = records.reduce((s,r)=>s+r.gross,0);
+  const gLiq   = records.reduce((s,r)=>s+r.liq,0);
+  const gDesc  = records.reduce((s,r)=>s+r.total,0);
+
+  const years = [...new Set(records.map(r => r.year))].sort((a,b) => b-a);
+
+  let yearCards = '';
+  for (const year of years) {
+    const yr    = records.filter(r => r.year === year);
+    const yB    = yr.reduce((s,r)=>s+r.gross,0);
+    const yL    = yr.reduce((s,r)=>s+r.liq,0);
+    const yD    = yr.reduce((s,r)=>s+r.total,0);
+    const media = yL / Math.max(yr.length, 1);
+    const pctLiq = yB > 0 ? (yL/yB)*100 : 0;
+
+    yearCards += `
+      <div class="card" style="margin-bottom:14px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+          <span style="font-size:15px;font-weight:700;color:var(--text)">${year}</span>
+          <span style="font-size:11px;color:var(--muted)">${yr.length} meses lançados</span>
+        </div>
+        <div class="grid-4">
+          <div class="metric-box"><div class="metric-label">Bruto Anual</div><div class="metric-val" style="color:var(--pink)">${fmt(yB)}</div></div>
+          <div class="metric-box"><div class="metric-label">Líquido Anual</div><div class="metric-val" style="color:var(--green)">${fmt(yL)}</div></div>
+          <div class="metric-box"><div class="metric-label">Descontos</div><div class="metric-val" style="color:var(--red)">${fmt(yD)}</div></div>
+          <div class="metric-box"><div class="metric-label">Média Mensal Líquida</div><div class="metric-val" style="color:var(--accent2)">${fmt(media)}</div></div>
+        </div>
+        <div class="prog-track"><div class="prog-fill" style="width:${pctLiq.toFixed(1)}%"></div></div>
+        <div style="font-size:10px;color:var(--muted2);margin-top:5px">${pctLiq.toFixed(1)}% do bruto convertido em líquido</div>
+      </div>`;
+  }
+
+  body.innerHTML = `
+    <div class="grid-3" style="margin-bottom:24px">
+      <div class="card total-mega">
+        <div style="font-size:10px;letter-spacing:2px;color:var(--muted);text-transform:uppercase">💰 Total Renda Bruta</div>
+        <div class="val" style="color:var(--pink)">${fmt(gBruto)}</div>
+        <div style="font-size:11px;color:var(--muted2)">Soma de todos os meses</div>
+      </div>
+      <div class="card total-mega">
+        <div style="font-size:10px;letter-spacing:2px;color:var(--muted);text-transform:uppercase">💚 Total Renda Líquida</div>
+        <div class="val" style="color:var(--green)">${fmt(gLiq)}</div>
+        <div style="font-size:11px;color:var(--muted2)">Após todos os descontos</div>
+      </div>
+      <div class="card total-mega">
+        <div style="font-size:10px;letter-spacing:2px;color:var(--muted);text-transform:uppercase">📉 Total Descontos</div>
+        <div class="val" style="color:var(--red)">${fmt(gDesc)}</div>
+        <div style="font-size:11px;color:var(--muted2)">${gBruto > 0 ? ((gDesc/gBruto)*100).toFixed(1) : 0}% do bruto total</div>
+      </div>
+    </div>
+    ${yearCards}`;
+}
+
+// ─── RENDER ALL ───
+function renderAll() {
+  renderHistorico();
+  renderPrevisao();
+  renderTotais();
+}
+
+// ─── TOAST ───
+function toast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.style.display = 'block';
+  clearTimeout(t._timer);
+  t._timer = setTimeout(() => { t.style.display = 'none'; }, 3000);
+}
+
+// ─── INIT ───
+loadData();
+recalc();
+document.getElementById('f-inss').disabled = true;
+document.getElementById('f-irrf').disabled = true;
+</script>
+</body>
+</html>
